@@ -32,7 +32,7 @@ class GlApp {
         };
 
         this.scene = scene;                               // current scene to draw (list of models and lights)
-        this.algorithm = 'gouraud';                       // current shading algorithm to use for rendering
+        this.algorithm = 'gouraud_color';                       // current shading algorithm to use for rendering
 
 
         // download and compile shaders into GPU program
@@ -107,6 +107,8 @@ class GlApp {
 
     UpdateTexture(texture, image_element) {
         // TODO: update image for specified texture
+        if(this.algorithm.equals("gouraud_color")) this.algorithm = "gouraud_texture"; 
+        else if(this.algorithm.equals("phong_color")) this.algorithm = "phong_texture"; 
     }
 
     Render() {
@@ -115,8 +117,11 @@ class GlApp {
         
         // draw all models
         for (let i = 0; i < this.scene.models.length; i ++) {
-            // NOTE: you need to properly select shader here
-            let selected_shader = 'emissive';
+            // NOTE: you need to properly select shader here TODO
+            //let selected_shader = 'emissive';
+            console.log(this.algorithm); 
+            console.log(typeof(this.algorithm)); 
+            let selected_shader = this.algorithm;
             this.gl.useProgram(this.shader[selected_shader].program);
 
             // transform model to proper position, size, and orientation
@@ -174,7 +179,7 @@ class GlApp {
 
     SetShadingAlgorithm(algorithm) {
         // update shading algorithm
-        this.algorithm = algorithm;
+        this.algorithm = algorithm + "_color";
 
         // render scene
         this.Render();
