@@ -15,12 +15,11 @@ void main() {
     //FragColor = vec4(material_color, 1.0);
     
     vec3 newambient = ambient * material_color; 
+    //bvec3 newambient.lessThan(vec3(0.0, 0.0, 0.0)); 
     
     vec3 newdiffuse = diffuse * material_color; 
     
     vec3 newspecular = specular * material_specular; 
-    
-    //TODO Check if this is an appropriate way to add vectors
     
     FragColor = vec4(newambient + newdiffuse + newspecular, 1.0); 
 }

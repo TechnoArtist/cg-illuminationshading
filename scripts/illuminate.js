@@ -216,7 +216,7 @@ class GlApp {
     }
 
     LoadShader(vert_source, frag_source, program_name, has_texture) {
-        // compile vetex shader
+        // compile vertex shader
         let vertex_shader = this.CompileShader(vert_source, this.gl.VERTEX_SHADER);
         // compile fragment shader
         let fragment_shader = this.CompileShader(frag_source, this.gl.FRAGMENT_SHADER);
