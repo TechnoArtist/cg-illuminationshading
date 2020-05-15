@@ -32,7 +32,7 @@ class GlApp {
         };
 
         this.scene = scene;                               // current scene to draw (list of models and lights)
-        this.algorithm = 'gouraud_color';                       // current shading algorithm to use for rendering
+        this.algorithm = 'gouraud';                       // current shading algorithm to use for rendering
 
 
         // download and compile shaders into GPU program
@@ -89,9 +89,17 @@ class GlApp {
     InitializeTexture(image_url) {
         // create a texture, and upload a temporary 1px white RGBA array [255,255,255,255]
         let texture = this.gl.createTexture();
-
+        
         // TODO: set texture parameters and upload a temporary 1px white RGBA array [255,255,255,255]
         // ...
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image_url);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.bindTexture(gl.TEXTURE_2D, null);
 
         // download the actual image
         let image = new Image();
@@ -101,7 +109,7 @@ class GlApp {
             this.UpdateTexture(texture, image);
         }, false);
         image.src = image_url;
-
+        
         return texture;
     }
 
@@ -117,13 +125,11 @@ class GlApp {
         
         // draw all models
         for (let i = 0; i < this.scene.models.length; i ++) {
-            // NOTE: you need to properly select shader here TODO
-            //let selected_shader = 'emissive';
-            console.log(this.algorithm); 
-            console.log(typeof(this.algorithm)); 
-            let selected_shader = this.algorithm;
+            // NOTE: you need to properly select shader here 
+            let selected_shader = this.algorithm + "_" + this.scene.models[i].shader;
+            console.log(selected_shader); 
             this.gl.useProgram(this.shader[selected_shader].program);
-
+            
             // transform model to proper position, size, and orientation
             glMatrix.mat4.identity(this.model_matrix);
             glMatrix.mat4.translate(this.model_matrix, this.model_matrix, this.scene.models[i].center);
@@ -131,8 +137,20 @@ class GlApp {
             glMatrix.mat4.rotateY(this.model_matrix, this.model_matrix, this.scene.models[i].rotate_y);
             glMatrix.mat4.rotateX(this.model_matrix, this.model_matrix, this.scene.models[i].rotate_x);
             glMatrix.mat4.scale(this.model_matrix, this.model_matrix, this.scene.models[i].size);
-
+            
+            //3fv = 3 component float vector; i = integer, etc
+            this.gl.uniform3fv(this.shader[selected_shader].uniform.light_ambient, this.scene.light.ambient); 
+            
+            this.gl.uniform3fv(this.shader[selected_shader].uniform.light_position, this.scene.light.point_lights[0].position); 
+            this.gl.uniform3fv(this.shader[selected_shader].uniform.light_color, this.scene.light.point_lights[0].color); 
+            
+            this.gl.uniform1f(this.shader[selected_shader].uniform.material_shininess, this.scene.models[i].material.shininess); 
+            
+            this.gl.uniform3fv(this.shader[selected_shader].uniform.camera_position, this.scene.camera.position); 
+            
+            
             this.gl.uniform3fv(this.shader[selected_shader].uniform.material_color, this.scene.models[i].material.color);
+            this.gl.uniform3fv(this.shader[selected_shader].uniform.material_specular, this.scene.models[i].material.specular);
             this.gl.uniformMatrix4fv(this.shader[selected_shader].uniform.projection_matrix, false, this.projection_matrix);
             this.gl.uniformMatrix4fv(this.shader[selected_shader].uniform.view_matrix, false, this.view_matrix);
             this.gl.uniformMatrix4fv(this.shader[selected_shader].uniform.model_matrix, false, this.model_matrix);
@@ -179,7 +197,7 @@ class GlApp {
 
     SetShadingAlgorithm(algorithm) {
         // update shading algorithm
-        this.algorithm = algorithm + "_color";
+        this.algorithm = algorithm; 
 
         // render scene
         this.Render();

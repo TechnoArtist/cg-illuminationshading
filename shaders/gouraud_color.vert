@@ -19,34 +19,33 @@ out vec3 diffuse;
 out vec3 specular;
 
 void main() {
+    
+    //NOTE vertex_position is the position of the default vertexes for that shape, not the transformed vertices
     /*
     NOTE change the vert outs and frag ins to determine what gets interpolated
     
     TODO gouraud = interpolate colors (phong = normals) 
         final colors? Does that mean the frag shader will end up doing nothing? 
         
-    NOTE dot product = angle; 1 = same, 0 = perpendicular, -1 = opposite. 
+    NOTE dot product =~ angle; 1 = same, 0 = perpendicular, -1 = opposite. 
     */
     
-    
-    gl_Position = projection_matrix * view_matrix * model_matrix * vec4(vertex_position, 1.0);
-
-    vec3 light_vector = light_position - gl_Position.xyz; 
-    vec3 light_intensity = vec3(1.0, 1.0, 1.0) / abs((gl_Position.xyz - light_position) * (gl_Position.xyz - light_position)); 
-    
-    vec3 reflected = normalize(reflect(normalize(light_vector), normalize(vertex_normal))); 
-    vec3 view_direction = normalize(vec3(camera_position - gl_Position.xyz)); 
+    gl_Position = projection_matrix * view_matrix * model_matrix * vec4(vertex_position, 1.0); 
     
     
     ambient = light_ambient; 
-    /*
-    diffuse = light_intensity * dot(normalize(vertex_normal), normalize(light_vector)); 
     
-    specular = light_intensity * pow(dot(reflected, view_direction), material_shininess); */
+    vec3 vertex_position_new = vec3(model_matrix * vec4(vertex_position, 1.0)); 
+    vec3 vertex_normal_new = normalize(inverse(transpose(mat3(model_matrix))) * vertex_normal); 
+    vec3 light_vector = normalize(light_position - vertex_position_new); 
     
-    //ambient = vec3(0.15, 0.15, 0.15); 
-    //ambient = vec3(0.0, 0.0, 0.0); 
-    diffuse = vec3(0.0, 0.0, 0.0); 
-    specular = vec3(0.0, 0.0, 0.0); 
+    diffuse = light_color * clamp(dot(vertex_normal_new, light_vector), 0.0, 1.0); 
+    
+    
+    vec3 reflected = normalize(reflect(normalize(light_vector), normalize(vertex_normal))); 
+    vec3 view_direction = normalize(vec3(camera_position - vertex_position)); 
+    
+    
+    specular = light_color * clamp(pow(dot(reflected, view_direction), material_shininess), 0.0, 1.0); 
     
 }
